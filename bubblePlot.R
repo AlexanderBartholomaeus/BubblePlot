@@ -24,7 +24,8 @@ bubblePlot <- function(
   stroke = 1,
   flipAxis = FALSE,
   xlabelSize = 5,
-  ylabelSize = 6){
+  ylabelSize = 6,
+  baseTextSize = 5){
   
   #browser()
   
@@ -65,14 +66,14 @@ bubblePlot <- function(
     # add color
     df_new <- merge(df_new,cbind(rowNames2,bubbleColor),by.x=1,by.y=1)
     colnames(df_new)[4] <- 'color'
-  }
+  } 
   
   # reorder
   if(!is.null(colOrder)){
     # check dimension
     # ToDo: build a check, which checks with column names and works also if column names are not changed
     # rename
-    df_new$Var2 <- factor(df_new$Var2, levels = colOrder) 
+    df_new$Var2 <- factor(df_new$Var2, levels = rev(colOrder)) 
   }
   if(!is.null(rowOrder)){
     # check dimension
@@ -91,8 +92,10 @@ bubblePlot <- function(
       y = Var2, 
       x = Var1
     )
-  ) +
-    geom_point(
+  )
+  # color set
+  if(!is.null(bubbleColor)){
+    g <- g + geom_point(
       aes(
         size = value, 
         fill = color
@@ -100,17 +103,32 @@ bubblePlot <- function(
       colour = 'black',
       stroke = stroke,
       shape = 21
-    ) +
+    ) 
+  } else {
+    g <- g + geom_point(
+      aes(
+        size = value
+      ),
+      colour = 'black',
+      fill='grey',
+      stroke = stroke,
+      shape = 21
+    ) 
+  }
+  g <- g + 
     scale_size(range = c(0, bubbleSize)) +
     scale_colour_discrete() +  
-    theme_light(base_size = 9) +
+    theme_light(base_size = baseTextSize) +
     #theme_minimal(base_size = 5) +
     theme(
       axis.text.x = element_text(
         angle = 90,
         hjust = 1,
         vjust = 0
-      )
+      ),
+      #legend.spacing.x = unit(round(baseTextSize/10,digits=0),units = 'mm'),
+      #legend.spacing.y = unit(round(baseTextSize/10,digits=0),units = 'mm'),
+      legend.key.size = unit(round(baseTextSize/5,digits=0),units = 'mm')
     ) +
     theme(axis.text.y = element_text(size = ylabelSize)) +
     theme(axis.text.x = element_text(size = xlabelSize)) +
@@ -119,11 +137,16 @@ bubblePlot <- function(
     # scale_y_discrete(
     #   labels = sampleOrder
     # )
+    # remove axis headings
+    xlab('') +
+    ylab('')
   
   # flip axis
   if(flipAxis){
     g <- g +
-      coord_flip()
+      coord_flip() +
+      scale_x_discrete(limits = rev(levels(df_new$Var1))) +
+      scale_y_discrete(limits = rev(levels(df_new$Var2)))
   }
   
   # return

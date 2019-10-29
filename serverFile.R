@@ -1,0 +1,378 @@
+appData <- reactiveValues(
+  raw = NULL,
+  taxa = NULL
+)
+
+# asv file
+observeEvent(input$importAsv,{
+  if(!is.null(input$fileAsv)) {
+    result = tryCatch({
+      # infile
+      inFile <- input$fileAsv
+      # read table
+      dat <- read.table(
+        inFile$datapath,
+        header=input$headerAsv,
+        sep = input$sepAsv,
+        stringsAsFactors = F)
+      if(input$firstColRownamesAsv) {
+        appData$raw <- dat[,2:ncol(dat)]
+        rownames(appData$raw) <- dat[,1]
+      } else {
+        appData$raw <- dat
+      }
+      # update col and row select
+      updateSelectizeInput(
+        session,
+        'colSelect',
+        choices = colnames(appData$raw)#, 
+        #selected = colnames(appData$raw)
+      )
+      updateSelectizeInput(
+        session,
+        'rowSelect',
+        choices = rownames(appData$raw)#, 
+        #selected = rownames(appData$raw)
+      )
+      # show message
+      showModal(
+        modalDialog(
+          title = 'File loaded',
+          tags$p('File successfully loaded! Please check the table browser before for correct import.'),
+          footer = modalButton('OK')
+        )
+      )
+    }, warning = function(w) {
+      # do nothing
+    }, error = function(e) {
+      showModal(
+        modalDialog(
+          title = 'Error',
+          tags$p(e),
+          footer = modalButton('OK')
+        )
+      )
+    }, finally = {
+      # do nothing
+    })
+  # no file selected
+  } else {
+    showModal(
+      modalDialog(
+        title = 'No file selected',
+        tags$p('Please select a file!'),
+        footer = modalButton('OK')
+      )
+    )
+  }
+},ignoreNULL = T)
+output$tabAsv <- renderDataTable(
+  head(appData$raw)
+) 
+# taxa file
+observeEvent(input$importTaxa,{
+  # check ASV data is loaded
+  if(is.null(appData$raw)){
+    showModal(
+      modalDialog(
+        title = 'Load ASV table first',
+        tags$p('Please load ASV data first to ensure correct processing of the taxa data.'),
+        footer = modalButton('OK')
+      )
+    )
+  } else if(!is.null(input$fileTaxa)) {
+    result = tryCatch({
+      # infile
+      inFile <- input$fileTaxa
+      # read table
+      dat <- read.table(
+        inFile$datapath,
+        header=input$headerTaxa,
+        sep = input$sepTaxa,
+        stringsAsFactors = F)
+      # check for same dimension of taxa and asv data
+      if(nrow(dat) != nrow(appData$raw)){
+        showModal(
+          modalDialog(
+            title = 'Taxa table with wrong row number',
+            tags$p('Taxa table has different number of rows than ASV table.'),
+            footer = modalButton('OK')
+          )
+        )
+      } else {
+        # use first column
+        if(input$firstColRownamesTaxa) {
+          appData$raw <- dat[,2:ncol(dat)]
+          rownames(appData$taxa) <- dat[,1]
+        } else {
+          appData$taxa <- dat
+        }
+        # reordering
+        if(reorderTaxa){
+          matchRows <- match(rownames(appData$taxa),rownames(appData$raw))
+          if(length(matchRows) == ncol(appData$raw)){
+            appData$taxa <- appData$taxa[match(rownames(appData$taxa),rownames(appData$raw))]
+          } else {
+            showModal(
+              modalDialog(
+                title = 'Reordering not successful',
+                tags$p('Reordering not successful was not successful due to incomplete matching of rownames with ASV table.'),
+                footer = modalButton('OK')
+              )
+            )
+          }
+        }
+        # update col select and row reordering selection
+        updateSelectInput(
+          session,
+          'colorSelect',
+          choices = colnames(appData$taxa),
+          selected = ''
+        )
+        updateSelectInput(
+          session,
+          'rowReorder',
+          choices = colnames(appData$taxa),
+          selected = ''
+        )
+        # show message
+        showModal(
+          modalDialog(
+            title = 'File loaded',
+            tags$p('File successfully loaded! Please check the table browser before for correct import.'),
+            footer = modalButton('OK')
+          )
+        )
+      }
+    }, warning = function(w) {
+      # do nothing
+    }, error = function(e) {
+      showModal(
+        modalDialog(
+          title = 'Error',
+          tags$p(e),
+          footer = modalButton('OK')
+        )
+      )
+    }, finally = {
+      # do nothing
+    })
+  # no file selected 
+  } else {
+    showModal(
+      modalDialog(
+        title = 'No file selected',
+        tags$p('Please select a file!'),
+        footer = modalButton('OK')
+      )
+    )
+  }
+},ignoreNULL = T)
+output$tabTaxa <- renderDataTable(
+  head(appData$taxa)
+) 
+# add copy as ASV as taxa table
+observeEvent(input$useAsv,{
+  if(input$useAsv && !is.null(appData$raw)){
+    appData$taxa <- appData$raw
+    updateSelectInput(
+      session,
+      'colorSelect',
+      choices = colnames(appData$taxa),
+      selected = '')
+    updateSelectInput(
+      session,
+      'rowReorder',
+      choices = colnames(appData$taxa),
+      selected = ''
+    )
+  }
+})
+
+### listen to selection buttons
+# column selection
+observeEvent(input$colSelectRmAll,{
+  updateSelectizeInput(session,'colSelect',selected = '')
+})
+observeEvent(input$colSelectAddAll,{
+  updateSelectizeInput(session,'colSelect',selected = colnames(appData$raw))
+})
+# row selection
+observeEvent(input$rowSelectRmAll,{
+  updateSelectizeInput(session,'rowSelect',selected = '')
+})
+observeEvent(input$rowSelectAddAll,{
+  updateSelectizeInput(session,'rowSelect',selected = rownames(appData$raw))
+})
+observeEvent(input$rowSelectAdd20,{
+  updateSelectizeInput(session,'rowSelect',selected = rownames(appData$raw)[1:20])
+})
+observeEvent(input$rowSelectAdd50,{
+  updateSelectizeInput(session,'rowSelect',selected = rownames(appData$raw)[1:50])
+})
+observeEvent(input$rowSelectAdd100,{
+  updateSelectizeInput(session,'rowSelect',selected = rownames(appData$raw)[1:100])
+})
+
+# apply reorder on rows / ASV's
+observeEvent(input$rowReorderGo,{
+  # check if selected
+  if(
+    !is.null(input$rowReorder) && 
+    input$rowReorder != '' && 
+    !is.null(input$rowSelect) && 
+    length(input$rowSelect) > 0
+  ){
+    # order 
+    rowN <- rownames(appData$raw)[is.element(rownames(appData$raw),input$rowSelect)] # restore original order
+    tax <- appData$taxa[,input$rowReorder]
+    rowN <- rowN[order(tax)]
+    # update
+    updateSelectizeInput(session,'rowSelect',selected = rowN)
+  } else {
+    showModal(
+      modalDialog(
+        title = 'Select ASV\'s and reorder property',
+        tags$p('Please ASV\'s and taxonomic rank to reorder the ASV\'s and try to reorder again.'),
+        footer = modalButton('OK')
+      )
+    )
+  }
+})
+
+# generate bubble plot
+#bubble <- eventReactive(input$bubblePlotGo,{
+bubble <- reactive({
+  if(!is.null(input$rowSelect) && !is.null(input$colSelect)){
+    dat <- appData$raw[input$rowSelect,input$colSelect]
+    if(!is.null(appData$taxa) && nrow(appData$taxa)>0){
+      tax <- appData$taxa[input$rowSelect,input$colorSelect]
+    } else {
+      tax <- NULL
+    }
+      
+    g <- bubblePlot(
+      dat,
+      bubbleColor = tax,
+      colOrder = input$colSelect,
+      rowOrder = input$rowSelect,
+      #rowNames = rowNam,
+      bubbleSize = input$bubbleSize,
+      stroke = input$bubbleStroke,
+      xlabelSize = input$xlabelsize,
+      ylabelSize = input$ylabelsize,
+      baseTextSize = input$baseSize,
+      flipAxis = input$flipAxis)
+  }
+})
+# make reative to plot size
+# output$bubblePlot <- renderUI({
+#   tagList(
+#     renderPlot(
+#       plot(bubble()),
+#       width=input$plotWidth,
+#       height=input$plotHeight
+#     )
+#   )
+# })
+# make png bubble plot directly
+output$bubblePlot2 <- renderImage({
+  
+  ggsave(
+    filename = 'bubbleP.png',
+    plot = bubble(),
+    width = round(input$plotWidth/2,digits = 0),
+    height = round(input$plotHeight/2,digits = 0),
+    units = 'cm'
+  )
+  
+  # Return a list containing information about the image
+  list(src = 'bubbleP.png',
+       contentType = "image/png",
+       #width = paste0((input$zoom),'%'),
+       #height = paste0((input$zoom),'%'),
+       alt = "Bubble plot")
+})
+# reactive ui width
+# output$bubblePlotUi <- renderUI({
+#   imageOutput('bubblePlot2',width=paste0(input$zoom,'px'),height=paste0(input$plotHeight,'px'))
+# })
+
+# download PNG
+output$savePng <- downloadHandler(
+  filename <- function() {
+    paste("bubblePlot", "png", sep=".")
+  },
+  content = function(file){
+    ggsave(
+      filename = file,
+      plot = bubble(),
+      width = round(input$plotWidth/2,digits = 0),
+      height = round(input$plotHeight/2,digits = 0),
+      units = 'cm'
+    )
+  }
+)
+
+# download PDF
+output$savePdf <- downloadHandler(
+  filename = 'bubblePlot.pdf',
+  content = function(file){
+    ggsave(
+      file,
+      bubble(),
+      width = round(input$plotWidth/2,digits = 0),
+      height = round(input$plotHeight/2,digits = 0),
+      units = 'cm'
+    )
+  }
+)
+
+# download SVG
+output$saveSvg <- downloadHandler(
+  filename = 'bubblePlot.svg',
+  content = function(file){
+    ggsave(
+      file,
+      bubble(),
+      width = round(input$plotWidth/2,digits = 0),
+      height = round(input$plotHeight/2,digits = 0),
+      units = 'cm'
+    )
+  }
+)
+
+# download RData object
+output$saveRdata <- downloadHandler(
+  filename = 'bubblePlot.RData',
+  content = function(file){
+    # create dat
+    dat <- appData$raw[input$rowSelect,input$colSelect]
+    if(!is.null(appData$taxa) && nrow(appData$taxa)>0){
+      tax <- appData$taxa[input$rowSelect,input$colorSelect]
+    } else {
+      tax <- NULL
+    }
+    bubbleData <- list(
+      asvData = appData$raw, 
+      taxaData = appData$taxa,
+      bubblePlot = bubble(),
+      bubblePlotPara = list(
+        dat,
+        bubbleColor = tax,
+        colOrder = input$colSelect,
+        rowOrder = input$rowSelect,
+        bubbleSize = input$bubbleSize,
+        stroke = input$bubbleStroke,
+        xlabelSize = input$xlabelsize,
+        ylabelSize = input$ylabelsize,
+        baseTextSize = input$baseSize
+      )
+    )
+    # save
+    save(
+      bubbleData,
+      file = file
+    )
+  }
+)
