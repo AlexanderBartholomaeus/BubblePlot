@@ -135,6 +135,12 @@ observeEvent(input$importTaxa,{
           choices = colnames(appData$taxa),
           selected = ''
         )
+        updateSelectInput(
+          session,
+          'sumSelect',
+          choices = colnames(appData$taxa),
+          selected = ''
+        )
         # show message
         showModal(
           modalDialog(
@@ -183,6 +189,12 @@ observeEvent(input$useAsv,{
     updateSelectInput(
       session,
       'rowReorder',
+      choices = colnames(appData$taxa),
+      selected = ''
+    )
+    updateSelectInput(
+      session,
+      'sumSelect',
       choices = colnames(appData$taxa),
       selected = ''
     )
@@ -240,13 +252,34 @@ observeEvent(input$rowReorderGo,{
   }
 })
 
+# summarize by
+observeEvent(input$sumSelect,{
+  if(input$sumByTaxa && !is.null(input$sumSelect) && input$sumSelect != ''){
+    updateSelectizeInput(session,'sumSelector', choices = appData$taxa[,input$sumSelect])
+  } else {
+    updateSelectizeInput(session,'sumSelector',selected = '', choices = '')
+  }
+})
+
 # generate bubble plot
 #bubble <- eventReactive(input$bubblePlotGo,{
 bubble <- reactive({
   if(!is.null(input$rowSelect) && !is.null(input$colSelect)){
+    # get selected data
     dat <- appData$raw[input$rowSelect,input$colSelect]
-    if(!is.null(appData$taxa) && nrow(appData$taxa)>0){
+    
+    # summarize
+    if(input$sumByTaxa){
+      dat <- aggregate(dat,by=list(appData$taxa[input$rowSelect,input$sumSelect]),sum)
+      rownames(dat) <- dat[,1]
+      dat <- dat[,2:ncol(dat)]
+    }
+    
+    # define color (ignore if summarized)
+    if(!is.null(appData$taxa) && nrow(appData$taxa)>0 && !input$sumByTaxa){
       tax <- appData$taxa[input$rowSelect,input$colorSelect]
+    } else if(input$sumByTaxa){
+      tax = rownames(dat)
     } else {
       tax <- NULL
     }
@@ -255,7 +288,7 @@ bubble <- reactive({
       dat,
       bubbleColor = tax,
       colOrder = input$colSelect,
-      rowOrder = input$rowSelect,
+      rowOrder = if(!input$sumByTaxa){input$rowSelect}else{input$sumSelector[is.element(input$sumSelector,rownames(dat))]},
       #rowNames = rowNam,
       bubbleSize = input$bubbleSize,
       stroke = input$bubbleStroke,

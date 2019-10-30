@@ -61,11 +61,20 @@ fluidPage(theme = shinytheme('spacelab'),
       actionButton('rowReorderGo', 'Apply reordering'),
       tags$hr(),
       tags$h4('Select bubble coloring'),
-      selectInput('colorSelect','Color based on',choices = NULL)
+      selectInput('colorSelect','Color based on',choices = NULL),
+      tags$hr(),
+      tags$h4('! experimental: Summarize by taxonomy'),
+      checkboxInput('sumByTaxa', 'Summuarize by taxonomy',value = FALSE),
+      selectInput('sumSelect','Sum by',choices = NULL),
+      selectizeInput('sumSelector','Select taxa',
+                     choices = NULL,
+                     multiple = TRUE,
+                     options = list(plugins = list('remove_button', 'drag_drop')),
+                     width = 700)
     ),
     
     tabPanel(
-      title = 'Bubble plot',
+      title = 'Bubble Plot',
       
       tags$br(),
       # Sidebar with a slider input for number of bins 
