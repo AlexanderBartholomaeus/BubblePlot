@@ -1,5 +1,6 @@
 library(reshape2)
 library(ggplot2)
+library(plyr)
 
 #' Bubble plot
 #' 
@@ -54,7 +55,11 @@ bubblePlot <- function(
   rowNames2 <- rownames(df_new)
   
   # melt
+  rownames(df_new)[rownames(df_new)=='NA'] <- 'N###A' # rename NA to not lose them
   df_new <- melt(as.matrix(df_new))
+  if(sum(df_new$Var1=='N###A')>0){
+    df_new$Var1 <- mapvalues(df_new$Var1,'N###A','NA') # rename back
+  }
   
   # add color
   # ToDo: find better solution of coloring

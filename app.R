@@ -1,8 +1,9 @@
 
-
 library(shiny)
 library(shinythemes)
 library(ggplot2)
+library(reshape2)
+library(plyr)
 library(svglite)
 library(DT)
 source('bubblePlot.R')

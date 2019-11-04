@@ -254,25 +254,40 @@ observeEvent(input$rowReorderGo,{
 
 # summarize by
 observeEvent(input$sumSelect,{
-  if(input$sumByTaxa && !is.null(input$sumSelect) && input$sumSelect != ''){
+  if(!is.null(input$sumSelect) && input$sumSelect != ''){
     updateSelectizeInput(session,'sumSelector', choices = appData$taxa[,input$sumSelect])
   } else {
     updateSelectizeInput(session,'sumSelector',selected = '', choices = '')
   }
+})
+observeEvent(input$sumSelectorAddAll,{
+  if(!is.null(input$sumSelect)){
+    updateSelectizeInput(session,'sumSelector',selected = appData$taxa[,input$sumSelect])
+  }
+})
+observeEvent(input$sumSelectorRmAll,{
+  updateSelectizeInput(session,'sumSelector',selected = '')
 })
 
 # generate bubble plot
 #bubble <- eventReactive(input$bubblePlotGo,{
 bubble <- reactive({
   if(!is.null(input$rowSelect) && !is.null(input$colSelect)){
+    #browser()
     # get selected data
     dat <- appData$raw[input$rowSelect,input$colSelect]
     
     # summarize
     if(input$sumByTaxa){
-      dat <- aggregate(dat,by=list(appData$taxa[input$rowSelect,input$sumSelect]),sum)
+      # create
+      sumBy <- appData$taxa[input$rowSelect,input$sumSelect]
+      sumBy[is.na(sumBy)] <- 'NA'
+      #dat <- aggregate(dat,by=list(appData$taxa[input$rowSelect,input$sumSelect]),sum)
+      dat <- aggregate(dat,by=list(sumBy),sum)
       rownames(dat) <- dat[,1]
       dat <- dat[,2:ncol(dat)]
+      # filter selected
+      dat <- dat[input$sumSelector[is.element(input$sumSelector,rownames(dat))],]
     }
     
     # define color (ignore if summarized)

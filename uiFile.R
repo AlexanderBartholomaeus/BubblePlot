@@ -6,9 +6,9 @@ fluidPage(theme = shinytheme('spacelab'),
   tabsetPanel(
     tabPanel(
       title = 'Data loading',
-      # some space
-      tags$br(),tags$br(),
+      style = 'margin-left:25px;',
       # asv file
+      tags$h4('Select ASV/OTU file'),
       fileInput('fileAsv','Select ASV file'),
       selectInput('sepAsv','Seperator', choices = c(';','tab'='\t',','), selected = ';'),
       checkboxInput('headerAsv','Header',value = TRUE),
@@ -16,6 +16,7 @@ fluidPage(theme = shinytheme('spacelab'),
       actionButton('importAsv', 'Load data'),
       tags$hr(),
       # taxa file
+      tags$h4('Select taxa file'),
       #checkboxInput('useAsv','Taxa in ASV file',value = FALSE),
       actionButton('useAsv','Taxa are in the ASV file'),
       tags$h4(' ... or selecte a seperate taxonomy file:'),
@@ -37,6 +38,7 @@ fluidPage(theme = shinytheme('spacelab'),
     ),
     tabPanel(
       title = 'Rows and Colums',
+      style = 'margin-left:25px;',
       tags$h4('Select and order columns'),
       actionButton('colSelectRmAll','Remove all'),
       actionButton('colSelectAddAll','Add all'),
@@ -63,14 +65,18 @@ fluidPage(theme = shinytheme('spacelab'),
       tags$h4('Select bubble coloring'),
       selectInput('colorSelect','Color based on',choices = NULL),
       tags$hr(),
-      tags$h4('! experimental: Summarize by taxonomy'),
+      tags$h4('Summarize by taxonomy'),
+      tags$p('Summarizing by taxonomy sums up abundances by on the selected taxonimc rank.'),
       checkboxInput('sumByTaxa', 'Summuarize by taxonomy',value = FALSE),
       selectInput('sumSelect','Sum by',choices = NULL),
+      actionButton('sumSelectorAddAll','Add all'),
+      actionButton('sumSelectorRmAll','Remove all'),
       selectizeInput('sumSelector','Select taxa',
                      choices = NULL,
                      multiple = TRUE,
                      options = list(plugins = list('remove_button', 'drag_drop')),
-                     width = 700)
+                     width = 700),
+      tags$span(height=150)
     ),
     
     tabPanel(
@@ -106,6 +112,7 @@ fluidPage(theme = shinytheme('spacelab'),
     ),
     tabPanel(
       title = 'Save plot',
+      style = 'margin-left:25px;',
       tags$br(),
       downloadButton('savePng','Download PNG'),
       tags$hr(),
