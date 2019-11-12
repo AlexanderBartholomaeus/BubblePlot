@@ -21,12 +21,15 @@ bubblePlot <- function(
   rowNames = NULL,
   rowOrder = NULL,
   bubbleColor = NULL,
+  bubbleColorName = NULL,
   bubbleSize = 4,
   stroke = 1,
   flipAxis = FALSE,
   xlabelSize = 5,
   ylabelSize = 6,
-  baseTextSize = 5){
+  baseTextSize = 5,
+  legendBubbleSize = NULL,
+  legendColorCols = NULL){
   
   #browser()
   
@@ -70,6 +73,7 @@ bubblePlot <- function(
     }
     # add color
     df_new <- merge(df_new,cbind(rowNames2,bubbleColor),by.x=1,by.y=1)
+    # add color name for legend
     colnames(df_new)[4] <- 'color'
   } 
   
@@ -121,7 +125,6 @@ bubblePlot <- function(
     ) 
   }
   g <- g + 
-    scale_size(range = c(0, bubbleSize)) +
     scale_colour_discrete() +  
     theme_light(base_size = baseTextSize) +
     #theme_minimal(base_size = 5) +
@@ -145,6 +148,37 @@ bubblePlot <- function(
     # remove axis headings
     xlab('') +
     ylab('')
+  
+  # set legend color name
+  if(!is.null(bubbleColorName)){
+    g <- g + guides(
+      fill = guide_legend(
+        title=bubbleColorName
+        )
+      )
+  }
+  # set legend color columns
+  if(!is.null(legendColorCols)){
+    g <- g + guides(
+      fill = guide_legend(
+        ncol = legendColorCols
+      )
+    )
+  }
+  
+  # set legend bubble size
+  if(!is.null(legendBubbleSize)){
+    g <- g + scale_size(
+      name = 'Abundance',
+      range = c(0, bubbleSize),
+      breaks = legendBubbleSize
+    )
+  } else {
+    g <- g + scale_size(
+      name = 'Abundance',
+      range = c(0, bubbleSize)
+    )
+  }
   
   # flip axis
   if(flipAxis){

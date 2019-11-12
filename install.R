@@ -8,9 +8,10 @@ myPacks <- c(
   'shiny',
   'shinythemes',
   'ggplot2',
+  'reshape2',
+  'plyr',
   'svglite',
-  'DT',
-  'reshape2'
+  'DT'
 )
 # install each
 install.packages(myPacks)

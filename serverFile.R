@@ -3,6 +3,11 @@ appData <- reactiveValues(
   taxa = NULL
 )
 
+legendData <- reactiveValues(
+  bubbleSize = NULL,
+  bubbleColorCols = NULL
+)
+
 # asv file
 observeEvent(input$importAsv,{
   if(!is.null(input$fileAsv)) {
@@ -15,33 +20,46 @@ observeEvent(input$importAsv,{
         header=input$headerAsv,
         sep = input$sepAsv,
         stringsAsFactors = F)
-      if(input$firstColRownamesAsv) {
+      if(input$firstColRownamesAsv && ncol(dat)>1) {
         appData$raw <- dat[,2:ncol(dat)]
         rownames(appData$raw) <- dat[,1]
       } else {
-        appData$raw <- dat
+         appData$raw <- dat
       }
-      # update col and row select
-      updateSelectizeInput(
-        session,
-        'colSelect',
-        choices = colnames(appData$raw)#, 
-        #selected = colnames(appData$raw)
-      )
-      updateSelectizeInput(
-        session,
-        'rowSelect',
-        choices = rownames(appData$raw)#, 
-        #selected = rownames(appData$raw)
-      )
-      # show message
-      showModal(
-        modalDialog(
-          title = 'File loaded',
-          tags$p('File successfully loaded! Please check the table browser before for correct import.'),
-          footer = modalButton('OK')
+      if(ncol(dat) > 1){
+        # update col and row select
+        updateSelectizeInput(
+          session,
+          'colSelect',
+          choices = colnames(appData$raw)#,
+          #selected = colnames(appData$raw)
         )
-      )
+        updateSelectizeInput(
+          session,
+          'rowSelect',
+          choices = c(rownames(appData$raw),'--ALL--')#,
+          #selected = rownames(appData$raw)
+        )
+        # show message
+        showModal(
+          modalDialog(
+            title = 'File loaded',
+            tags$p('File successfully loaded! Please check the table browser before for correct import.'),
+            footer = modalButton('OK')
+          )
+        )
+      } else {
+        # show message
+        showModal(
+          modalDialog(
+            title = 'File loading error?',
+            tags$p('It seems that the file loading is not correct, only 1 column was detected. 
+                   Please check the loaded data below and try to reload with different
+                   settings.'),
+            footer = modalButton('OK')
+          )
+        )
+      }
     }, warning = function(w) {
       # do nothing
     }, error = function(e) {
@@ -102,13 +120,13 @@ observeEvent(input$importTaxa,{
       } else {
         # use first column
         if(input$firstColRownamesTaxa) {
-          appData$raw <- dat[,2:ncol(dat)]
+          appData$taxa <- dat[,2:ncol(dat)]
           rownames(appData$taxa) <- dat[,1]
         } else {
           appData$taxa <- dat
         }
         # reordering
-        if(reorderTaxa){
+        if(input$reorderTaxa){
           matchRows <- match(rownames(appData$taxa),rownames(appData$raw))
           if(length(matchRows) == ncol(appData$raw)){
             appData$taxa <- appData$taxa[match(rownames(appData$taxa),rownames(appData$raw))]
@@ -214,7 +232,20 @@ observeEvent(input$rowSelectRmAll,{
   updateSelectizeInput(session,'rowSelect',selected = '')
 })
 observeEvent(input$rowSelectAddAll,{
-  updateSelectizeInput(session,'rowSelect',selected = rownames(appData$raw))
+  if(rownames(appData$raw) > 200){
+    showModal(
+      modalDialog(
+        title = 'Too many rows',
+        tags$p('Too many rows available. It is not recommended to add more than 200 rows. Please select term --ALL-- to keep all rows e.g. for the summarization by taxa.'),
+        actionButton('tooManyAddAll','Add all'),
+        actionButton('tooManyAdd200','Add first 200'),
+        actionButton('tooManyAdd500','Add first 500, just try'),
+        footer = modalButton('OK')
+      )
+    )
+  } else {
+    updateSelectizeInput(session,'rowSelect',selected = rownames(appData$raw))
+  }
 })
 observeEvent(input$rowSelectAdd20,{
   updateSelectizeInput(session,'rowSelect',selected = rownames(appData$raw)[1:20])
@@ -224,6 +255,15 @@ observeEvent(input$rowSelectAdd50,{
 })
 observeEvent(input$rowSelectAdd100,{
   updateSelectizeInput(session,'rowSelect',selected = rownames(appData$raw)[1:100])
+})
+observeEvent(input$tooManyAddAll,{
+  updateSelectizeInput(session,'rowSelect',selected = '--ALL--')
+})
+observeEvent(input$tooManyAdd200,{
+  updateSelectizeInput(session,'rowSelect',selected = rownames(appData$raw)[1:200])
+})
+observeEvent(input$tooManyAdd500,{
+  updateSelectizeInput(session,'rowSelect',selected = rownames(appData$raw)[1:500])
 })
 
 # apply reorder on rows / ASV's
@@ -255,7 +295,7 @@ observeEvent(input$rowReorderGo,{
 # summarize by
 observeEvent(input$sumSelect,{
   if(!is.null(input$sumSelect) && input$sumSelect != ''){
-    updateSelectizeInput(session,'sumSelector', choices = appData$taxa[,input$sumSelect])
+    updateSelectizeInput(session,'sumSelector', choices = appData$taxa[,input$sumSelect], selected = appData$taxa[,input$sumSelect])
   } else {
     updateSelectizeInput(session,'sumSelector',selected = '', choices = '')
   }
@@ -273,35 +313,59 @@ observeEvent(input$sumSelectorRmAll,{
 #bubble <- eventReactive(input$bubblePlotGo,{
 bubble <- reactive({
   if(!is.null(input$rowSelect) && !is.null(input$colSelect)){
+    
     #browser()
     # get selected data
-    dat <- appData$raw[input$rowSelect,input$colSelect]
+    inSel <- input$rowSelect
+    if(sum(is.element(input$rowSelect,'--ALL--'))==1){
+      dat <- appData$raw[,input$colSelect]
+      inSel <- rownames(appData$raw)
+    } else {
+      dat <- appData$raw[input$rowSelect,input$colSelect]
+    }
     
     # summarize
     if(input$sumByTaxa){
       # create
-      sumBy <- appData$taxa[input$rowSelect,input$sumSelect]
+      sumBy <- appData$taxa[inSel,input$sumSelect]
       sumBy[is.na(sumBy)] <- 'NA'
       #dat <- aggregate(dat,by=list(appData$taxa[input$rowSelect,input$sumSelect]),sum)
-      dat <- aggregate(dat,by=list(sumBy),sum)
+      dat <- aggregate(dat,by=list(sumBy),sum,na.rm=T)
       rownames(dat) <- dat[,1]
       dat <- dat[,2:ncol(dat)]
       # filter selected
       dat <- dat[input$sumSelector[is.element(input$sumSelector,rownames(dat))],]
     }
     
+    # set legend bubble size
+    if(!is.null(legendData$bubbleSize) && legendData$bubbleSize!=''){
+      legBubbleSize <- legendData$bubbleSize
+    }else {
+      legBubbleSize <- NULL
+    }
+    # set legend color columns 
+    if(!is.null(legendData$bubbleColorCols) && legendData$bubbleColorCols!=''){
+      legColorCols <- legendData$bubbleColorCols
+    }else {
+      legColorCols <- NULL
+    }
+      
     # define color (ignore if summarized)
     if(!is.null(appData$taxa) && nrow(appData$taxa)>0 && !input$sumByTaxa){
-      tax <- appData$taxa[input$rowSelect,input$colorSelect]
+      tax <- appData$taxa[inSel,input$colorSelect]
+      taxName <- input$colorSelect
     } else if(input$sumByTaxa){
-      tax = rownames(dat)
+      tax <- rownames(dat)
+      taxName <- input$sumSelect
     } else {
       tax <- NULL
+      taxName <- NULL
     }
       
     g <- bubblePlot(
       dat,
       bubbleColor = tax,
+      bubbleColorName = taxName,
       colOrder = input$colSelect,
       rowOrder = if(!input$sumByTaxa){input$rowSelect}else{input$sumSelector[is.element(input$sumSelector,rownames(dat))]},
       #rowNames = rowNam,
@@ -310,7 +374,9 @@ bubble <- reactive({
       xlabelSize = input$xlabelsize,
       ylabelSize = input$ylabelsize,
       baseTextSize = input$baseSize,
-      flipAxis = input$flipAxis)
+      flipAxis = input$flipAxis,
+      legendBubbleSize = legBubbleSize,
+      legendColorCols = legColorCols)
   }
 })
 # make reative to plot size
@@ -345,6 +411,42 @@ output$bubblePlot2 <- renderImage({
 # output$bubblePlotUi <- renderUI({
 #   imageOutput('bubblePlot2',width=paste0(input$zoom,'px'),height=paste0(input$plotHeight,'px'))
 # })
+
+# change legend
+observeEvent(input$legendModify,{
+  # check if size already set
+  sizePre <- NULL
+  if(!is.null(legendData$bubbleSize)){
+    sizePre <- paste(legendData$bubbleSize,collapse = ';')
+  }
+  showModal(
+    modalDialog(
+      title = 'Modify legend',
+      tags$h4('Bubble size'),
+      tags$p('Set the legend BubbleSize. Enter numbers separated by ; to get custom 
+             sizes or empty field to get default values. Note: the numbers must be in 
+             the range of possible values, otherwise they are not shown.'),
+      textInput('legendModifyBubble', label = 'Enter bubble sizes', value = sizePre),
+      actionButton('legendModifyBubbleGo', 'Set legend bubble sizes'),
+      tags$hr(),
+      tags$h4('Bubble color'),
+      sliderInput('legendModifyColorNcol','Number of columns for color legend', min = 1, max = 5, value = 1, step = 1),
+      footer = modalButton('OK')
+
+    )
+  )
+})
+observeEvent(input$legendModifyBubbleGo,{
+  bubSize <- as.numeric(gsub("\\s","",unlist(strsplit(input$legendModifyBubble,";"))))
+  if(!is.null(bubSize) && bubSize != '' && length(bubSize) > 0 && is.numeric(bubSize)){
+    legendData$bubbleSize <- bubSize
+  } else {
+    legendData$bubbleSize <- NULL
+  }
+})
+observeEvent(input$legendModifyColorNcol,{
+  legendData$bubbleColorCols <- input$legendModifyColorNcol
+})
 
 # download PNG
 output$savePng <- downloadHandler(

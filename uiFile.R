@@ -10,7 +10,7 @@ fluidPage(theme = shinytheme('spacelab'),
       # asv file
       tags$h4('Select ASV/OTU file'),
       fileInput('fileAsv','Select ASV file'),
-      selectInput('sepAsv','Seperator', choices = c(';','tab'='\t',','), selected = ';'),
+      selectInput('sepAsv','Separator', choices = c(';','tab'='\t',','), selected = ';'),
       checkboxInput('headerAsv','Header',value = TRUE),
       checkboxInput('firstColRownamesAsv','Take first columns as rownames',value = FALSE),
       actionButton('importAsv', 'Load data'),
@@ -19,11 +19,11 @@ fluidPage(theme = shinytheme('spacelab'),
       tags$h4('Select taxa file'),
       #checkboxInput('useAsv','Taxa in ASV file',value = FALSE),
       actionButton('useAsv','Taxa are in the ASV file'),
-      tags$h4(' ... or selecte a seperate taxonomy file:'),
+      tags$h4(' ... or selecte a separate taxonomy file:'),
       tags$p('The taxonomy file must have the same ordering of rows as the ASV file. 
              Alternatively you can reorder by rownames by selection the checkbox'),
       fileInput('fileTaxa','Select taxa file'),
-      selectInput('sepTaxa','Seperator', choices = c(';','tab'='\t',','), selected = ';'),
+      selectInput('sepTaxa','Separator', choices = c(';','tab'='\t',','), selected = ';'),
       checkboxInput('headerTaxa','Header',value = TRUE),
       checkboxInput('firstColRownamesTaxa','Take first columns as rownames',value = FALSE),
       checkboxInput('reorderTaxa','Reorder taxa table by rownames',value = FALSE),
@@ -98,8 +98,8 @@ fluidPage(theme = shinytheme('spacelab'),
           checkboxInput('flipAxis','Flip axis', value = F),
           sliderInput('baseSize','Legend text size',value = 3, step = 1, min = 1, max = 20),
           sliderInput('plotWidth','Plot width',value = 10, step = 1, min = 2, max = 30),
-          sliderInput('plotHeight','Plot height',value = 10, step = 1, min = 2, max = 30)#,
-          #sliderInput('zoom','Zoom level',value = 50, step = 10, min = 10, max = 100)
+          sliderInput('plotHeight','Plot height',value = 10, step = 1, min = 2, max = 30),
+          actionButton('legendModify','Modify legend')
         ),
         # Show a plot of the generated distribution
         mainPanel(
