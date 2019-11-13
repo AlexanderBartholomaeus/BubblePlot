@@ -232,7 +232,7 @@ observeEvent(input$rowSelectRmAll,{
   updateSelectizeInput(session,'rowSelect',selected = '')
 })
 observeEvent(input$rowSelectAddAll,{
-  if(rownames(appData$raw) > 200){
+  if(length(rownames(appData$raw)) > 200){
     showModal(
       modalDialog(
         title = 'Too many rows',
