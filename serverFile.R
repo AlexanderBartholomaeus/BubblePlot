@@ -1,6 +1,7 @@
 appData <- reactiveValues(
   raw = NULL,
-  taxa = NULL
+  taxa = NULL,
+  warnCols = 1
 )
 
 legendData <- reactiveValues(
@@ -11,6 +12,9 @@ legendData <- reactiveValues(
 # asv file
 observeEvent(input$importAsv,{
   if(!is.null(input$fileAsv)) {
+    # reset warning
+    appData$warnCols = 1
+    # try to load
     result = tryCatch({
       # infile
       inFile <- input$fileAsv
@@ -227,6 +231,34 @@ observeEvent(input$colSelectRmAll,{
 observeEvent(input$colSelectAddAll,{
   updateSelectizeInput(session,'colSelect',selected = colnames(appData$raw))
 })
+# check if columns are numeric and remove
+observeEvent(input$colSelect,{
+  # if warning is active
+  if(appData$warnCols==1){
+    colClasses <- sapply(1:length(input$colSelect),function(i){class(appData$raw[,input$colSelect[i]])})
+    colClass <- is.element(colClasses,c('numeric','integer'))
+    if(sum(colClass) != length(input$colSelect)){
+      showModal(
+        modalDialog(
+          title = 'Non-numeric column selected',
+          tags$p('It seems that you selected a non-numeric column that might cause problems during plotting. Please check you selection.'),
+          actionButton('colSelectRmNonNumeric','Unselect non-numeric columns'),
+          actionButton('colSelectDontAsk','Do not warn me again'),
+          footer = modalButton('OK')
+        )
+      )
+    }
+  }
+})
+observeEvent(input$colSelectRmNonNumeric,{
+  colClasses <- sapply(1:ncol(appData$raw),function(i){class(appData$raw[,i])})
+  colClass <- is.element(colClasses,c('numeric','integer'))
+  updateSelectizeInput(session,'colSelect',selected = input$colSelect[colClass])
+})
+observeEvent(input$colSelectDontAsk,{
+  appData$warnCols = 0
+})
+
 # row selection
 observeEvent(input$rowSelectRmAll,{
   updateSelectizeInput(session,'rowSelect',selected = '')
@@ -313,7 +345,7 @@ observeEvent(input$sumSelectorRmAll,{
 #bubble <- eventReactive(input$bubblePlotGo,{
 bubble <- reactive({
   if(!is.null(input$rowSelect) && !is.null(input$colSelect)){
-    
+  
     #browser()
     # get selected data
     inSel <- input$rowSelect
@@ -377,6 +409,14 @@ bubble <- reactive({
       flipAxis = input$flipAxis,
       legendBubbleSize = legBubbleSize,
       legendColorCols = legColorCols)
+  } else {
+    showModal(
+      modalDialog(
+        title = 'Select rows and columns',
+        tags$p('Please select rows and columns to plot! Use the tab \'Rows and Columns\' for selection!'),
+        footer = modalButton('OK')
+      )
+    )
   }
 })
 # make reative to plot size

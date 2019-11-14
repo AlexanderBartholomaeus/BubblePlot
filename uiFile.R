@@ -37,7 +37,7 @@ fluidPage(theme = shinytheme('spacelab'),
       dataTableOutput('tabTaxa')
     ),
     tabPanel(
-      title = 'Rows and Colums',
+      title = 'Rows and Columns',
       style = 'margin-left:25px;',
       tags$h4('Select and order columns'),
       actionButton('colSelectRmAll','Remove all'),
