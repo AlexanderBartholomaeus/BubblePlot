@@ -398,7 +398,7 @@ bubble <- reactive({
       dat,
       bubbleColor = tax,
       bubbleColorName = taxName,
-      colOrder = input$colSelect,
+      #colOrder = input$colSelect,
       rowOrder = if(!input$sumByTaxa){input$rowSelect}else{input$sumSelector[is.element(input$sumSelector,rownames(dat))]},
       #rowNames = rowNam,
       bubbleSize = input$bubbleSize,
