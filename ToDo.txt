@@ -1,0 +1,5 @@
+# ToDo
+
+ - change row selection --> summarizing
+ - allow download of summary 
+ - make manual
