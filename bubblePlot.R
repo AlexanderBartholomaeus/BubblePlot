@@ -105,6 +105,14 @@ bubblePlot <- function(
   # set 0 values to NA to not appear in the plot
   df_new$value[df_new$value == 0] <- NA
   
+  # check if factor
+  if(!is.factor(df_new$Var1)) {
+    df_new$Var1 <- as.factor(df_new$Var1)
+  } 
+  if(!is.factor(df_new$Var2)) {
+    df_new$Var2 <- as.factor(df_new$Var2)
+  }
+  
   # plot
   g <- ggplot2::ggplot(
     df_new, 
@@ -113,7 +121,7 @@ bubblePlot <- function(
       x = Var1
     )
   )
-  
+
   # flip and reorder axis and make discrete
   if(flipAxis){
     g <- g +

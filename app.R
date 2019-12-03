@@ -6,7 +6,9 @@ library(reshape2)
 library(plyr)
 library(svglite)
 library(DT)
+library(readxl)
 source('bubblePlot.R')
+source('functions/modals.R')
 
 options(shiny.maxRequestSize=15*1024^2)
 
