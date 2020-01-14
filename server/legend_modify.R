@@ -1,7 +1,8 @@
 # open modal to modify
 observeEvent(input$legendModify,{
   modal_legend_modify(
-    bubbles = legendData$bubbleSize
+    bubbles = legendData$bubbleSize,
+    bubbleColorSize = input$legendModifyColorSize
   )
 })
 # try to modify
@@ -20,11 +21,15 @@ observeEvent(input$legendModifyBubbleGo,{
     )
   }
 })
-# apply default legend bubble size
+# apply default legend bubble size (for the abundance)
 observeEvent(input$legendModifyBubbleDefault,{
   legendData$bubbleSize <- NULL
 })
 # change the number of columns for legend
 observeEvent(input$legendModifyColorNcol,{
   legendData$bubbleColorCols <- input$legendModifyColorNcol
+})
+# change the number of columns for legend
+observeEvent(input$legendModifyColorSize,{
+  legendData$bubbleColorSize <- input$legendModifyColorSize
 })

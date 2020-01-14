@@ -8,7 +8,7 @@ observeEvent(input$importAsv,{
       # infile
       inFile <- input$fileAsv
       # check file type
-      if(grep(".xls[x]{0,1}",inFile$datapath)){
+      if(length(grep(".xls[x]{0,1}",inFile$datapath))>0){
         dat <- data.frame(
           read_excel(
             inFile$datapath

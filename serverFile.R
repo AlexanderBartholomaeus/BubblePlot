@@ -7,7 +7,8 @@ appData <- reactiveValues(
 
 legendData <- reactiveValues(
   bubbleSize = NULL,
-  bubbleColorCols = NULL
+  bubbleColorCols = NULL,
+  bubbleColorSize = NULL
 )
 
 # load data files
@@ -203,6 +204,11 @@ bubble <- reactive({
     }else {
       legColorCols <- NULL
     }
+    if(!is.null(legendData$bubbleColorSize) && legendData$bubbleColorSize!=''){
+      legColorSize <- legendData$bubbleColorSize
+    }else {
+      legColorSize <- 5
+    }
       
     # define color (ignore if summarized)
     if(!is.null(appData$taxa) && nrow(appData$taxa)>0 && !input$sumByTaxa){
@@ -230,7 +236,8 @@ bubble <- reactive({
       baseTextSize = input$baseSize,
       flipAxis = input$flipAxis,
       legendBubbleSize = legBubbleSize,
-      legendColorCols = legColorCols)
+      legendColorCols = legColorCols,
+      legendColorSize = legColorSize)
   } else {
     showModal(
       modalDialog(
