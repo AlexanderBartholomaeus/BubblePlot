@@ -207,7 +207,7 @@ bubble <- reactive({
     if(!is.null(legendData$bubbleColorSize) && legendData$bubbleColorSize!=''){
       legColorSize <- legendData$bubbleColorSize
     }else {
-      legColorSize <- 5
+      legColorSize <- 2
     }
       
     # define color (ignore if summarized)

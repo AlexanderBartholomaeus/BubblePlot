@@ -2,7 +2,8 @@
 observeEvent(input$legendModify,{
   modal_legend_modify(
     bubbles = legendData$bubbleSize,
-    bubbleColorSize = input$legendModifyColorSize
+    bubbleColorSize = input$legendModifyColorSize,
+    bubbleColorCols = input$legendModifyColorNcol
   )
 })
 # try to modify

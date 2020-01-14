@@ -1,6 +1,6 @@
 
 ### modal to modify legend
-modal_legend_modify = function(bubbles = NULL, errorMessage = NULL, bubbleColorSize = 2, bubbleColorCols = 1){
+modal_legend_modify = function(bubbles = NULL, errorMessage = NULL, bubbleColorSize = 1, bubbleColorCols = 1){
   # check if size already set
   sizePre <- NULL
   if(!is.null(bubbles)){
@@ -26,9 +26,9 @@ modal_legend_modify = function(bubbles = NULL, errorMessage = NULL, bubbleColorS
       sliderInput(
         inputId = 'legendModifyColorSize',
         label = 'Size of bubbles for color legend', 
-        min = 1, max = 20, 
+        min = 0.1, max = 5, 
         value = bubbleColorSize,
-        step = 1
+        step = 0.1
       ),
       sliderInput(
         inputId = 'legendModifyColorNcol',

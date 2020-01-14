@@ -254,25 +254,27 @@ bubblePlot <- function(
   #g <- g + guides(fill=guide_legend(override.aes = list(size = legendColorSize)))
   
   # set legend color name, size and number of columns
-  bubbleColorName_ <- 'color'
   if(!is.null(bubbleColorName)){
-    bubbleColorName_ <- bubbleColorName
-  }
-  legendColorSize_ = 2
-  if(!is.null(legendColorSize)){
-    legendColorSize_ <- legendColorSize
-  }
-  legendColorCols_ <- 2
-  if(!is.null(legendColorCols)){
-    legendColorCols_ <- legendColorCols
-  }
-  g <- g + ggplot2::guides(
-    fill = guide_legend(
-      title = bubbleColorName_,
-      ncol = legendColorCols_,
-      override.aes = list(size=legendColorSize_)
+    g <- g + ggplot2::guides(
+      fill = guide_legend(
+        title = bubbleColorName
+      )
     )
-  )
+  }
+  if(!is.null(legendColorCols)){
+    g <- g + ggplot2::guides(
+      fill = guide_legend(
+        ncol = legendColorCols
+      )
+    )
+  }
+  if(!is.null(legendColorSize)){
+    g <- g + ggplot2::guides(
+      fill = guide_legend(
+        override.aes = list(size=legendColorSize)
+      )
+    )
+  }
 
   # set legend bubble size
   if(!is.null(legendBubbleSize)){
