@@ -29,6 +29,7 @@ bubblePlot <- function(
   ylabelSize = 6,
   baseTextSize = 5,
   legendBubbleSize = NULL,
+  legendBubblePercent = NULL,
   legendColorCols = NULL,
   legendColorSize = 2,
   backgroundHrect = NULL,
@@ -278,12 +279,21 @@ bubblePlot <- function(
 
   # set legend bubble size
   if(!is.null(legendBubbleSize)){
-    g <- g + ggplot2::scale_size(
-      name = 'Abundance',
-      range = c(0, bubbleSize),
-      breaks = legendBubbleSize,
-      labels = gsub("0+$","",as.character(legendBubbleSize))
-    )
+    if(!is.null(legendBubblePercent) && legendBubblePercent) {
+      g <- g + ggplot2::scale_size(
+        name = 'Abundance [%]',
+        range = c(0, bubbleSize),
+        breaks = legendBubbleSize,
+        labels = as.character(legendBubbleSize*100)
+      )
+    } else {
+      g <- g + ggplot2::scale_size(
+        name = 'Abundance',
+        range = c(0, bubbleSize),
+        breaks = legendBubbleSize,
+        labels = gsub("0+$","",as.character(legendBubbleSize))
+      )
+    }
   } else {
     g <- g + ggplot2::scale_size(
       name = 'Abundance',
